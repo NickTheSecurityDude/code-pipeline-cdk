@@ -15,11 +15,16 @@ region=client.meta.region_name
 
 account_id = client.get_caller_identity()["Account"]
 
-my_env = {'region': region, 'account': account_id}
+#main account number
+#enter deploy to account number in stacks/pipeline-stack.py
+my_env={
+'account': '111',
+'region': 'us-east-1'
+}
 
 from stacks.pipeline_stack import PipelineStack
 
-proj_name="proj-name2"
+proj_name="proj-name"
 
 app = core.App()
 
