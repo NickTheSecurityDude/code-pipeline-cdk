@@ -22,8 +22,26 @@ class PipelineStack(core.Stack):
     # get acct id for policies
     acct_id=env['account']
 
+    remote_acct="123456789012"
+    x_acct_arn="arn:aws:iam::"+remote_acct+":role/cf_x_acct_role"
+
     # create a bucket
-    my_bucket = s3.Bucket(self,"Bucket")
+    my_bucket = s3.Bucket(self,"Source Bucket",
+      versioned=True
+    )
+ 
+    art_bucket = s3.Bucket(self,"Art Bucket",
+      versioned=True
+    )    
+
+    art_bucket.add_to_resource_policy(
+      iam.PolicyStatement(
+        actions=["s3:Get*"],
+        effect=iam.Effect.ALLOW,
+        resources=[art_bucket.bucket_arn + '/*'],
+        principals=[iam.AccountPrincipal(x_acct_arn)]
+      )
+    )
 
     # create the pipeline
     my_pipeline = pipeline.Pipeline(self, "My Pipeline")
@@ -55,21 +73,22 @@ class PipelineStack(core.Stack):
     #)
      
     # create IRole
-    my_remote_role=iam.Role.from_role_arn(self,"Role","arn:aws:iam::123456789012:role/cf_x_acct_role")
+    my_remote_role=iam.Role.from_role_arn(self,"Role",x_acct_arn)
 
     # add nth stage
     deploy_stage = my_pipeline.add_stage(stage_name="Deploy")
     deploy_stage.add_action(
       pipeline_actions.CloudFormationCreateUpdateStackAction(
         action_name="Deploy",
+        account=remote_acct,
         admin_permissions=True,
         stack_name="my-stack",
         template_path=my_s3_artifact.at_path(
           "sg1.yaml"
         ),
-        #deployment_role=my_remote_role
-        role=my_remote_role
+        deployment_role=my_remote_role
       )
     )
+
 
 
