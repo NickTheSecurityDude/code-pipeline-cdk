@@ -16,33 +16,21 @@ from aws_cdk import (
 
 class PipelineStack(core.Stack):
 
-  def __init__(self, scope: core.Construct, construct_id: str, env, **kwargs) -> None:
-    super().__init__(scope, construct_id, **kwargs)
+  def __init__(self, scope: core.Construct, construct_id: str, **kwargs) -> None:
+    super().__init__(scope, construct_id,**kwargs)
 
     # get acct id for policies
-    acct_id=env['account']
-
-    remote_acct="123456789012"
-    x_acct_arn="arn:aws:iam::"+remote_acct+":role/cf_x_acct_role"
+    #acct_id=env['account']
+    
+    ## the account cloudformation will deploy to
+    x_acct="222"
+    x_acct_arn="arn:aws:iam::"+x_acct+":role/cf_x_acct_role"
 
     # create a bucket
     my_bucket = s3.Bucket(self,"Source Bucket",
       versioned=True
     )
  
-    art_bucket = s3.Bucket(self,"Art Bucket",
-      versioned=True
-    )    
-
-    art_bucket.add_to_resource_policy(
-      iam.PolicyStatement(
-        actions=["s3:Get*"],
-        effect=iam.Effect.ALLOW,
-        resources=[art_bucket.bucket_arn + '/*'],
-        principals=[iam.AccountPrincipal(x_acct_arn)]
-      )
-    )
-
     # create the pipeline
     my_pipeline = pipeline.Pipeline(self, "My Pipeline")
 
@@ -57,21 +45,11 @@ class PipelineStack(core.Stack):
       pipeline_actions.S3SourceAction(
         action_name="Source",
         bucket=my_bucket,
-        bucket_key="sg1.yaml",
+        bucket_key="sg1.zip",
         output=my_s3_artifact
       )
     )
 
-    #s3_output=pipeline.Artifact()
-
-    # add 2nd stage
-    # approval_stage = my_pipeline.add_stage(stage_name="Approval")
-    # approval_stage.add_action(
-    #  pipeline_actions.ManualApprovalAction(
-    #    action_name="Manual-Approval"
-    #  )
-    #)
-     
     # create IRole
     my_remote_role=iam.Role.from_role_arn(self,"Role",x_acct_arn)
 
@@ -80,7 +58,7 @@ class PipelineStack(core.Stack):
     deploy_stage.add_action(
       pipeline_actions.CloudFormationCreateUpdateStackAction(
         action_name="Deploy",
-        account=remote_acct,
+        account=x_acct,
         admin_permissions=True,
         stack_name="my-stack",
         template_path=my_s3_artifact.at_path(
