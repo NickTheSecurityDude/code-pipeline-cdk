@@ -1,0 +1,14 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "enter the account # youre deploying from",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::111:root",
+        "Service": "cloudformation.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
