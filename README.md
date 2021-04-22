@@ -4,3 +4,4 @@
 - ALSO enter your deploying to account number in stacks/pipeline_stack.py
 - deploy the "support stack" first
 - then deploy the pipeline stack with the --exclusively flag
+- upload sg1.zip to the s3 source bucket
